@@ -20,10 +20,12 @@ pip install -r requirements.txt
 ./download.sh
 ```
 
+or download for [Model URL](https://huggingface.co/fastrolling/uvr/resolve/main/Main_Models/2_HP-UVR.pth) and move `/uvr5_weights`
+
 ## Separation
 
 ```shell
-python separate.py
+python separate.py audio_path
 ```
 
 [Modify these lines to fit your needs](https://github.com/seanghay/uvr/blob/fa19a9821d42586883202623936a0c8b895ae047/separate.py#L101-L108)
