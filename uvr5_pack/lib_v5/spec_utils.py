@@ -66,7 +66,7 @@ def wave_to_spectrogram_mt(wave, hop_length, n_fft, mid_side=False, mid_side_b2=
 
     thread = threading.Thread(target=run_thread, kwargs={'y': wave_left, 'n_fft': n_fft, 'hop_length': hop_length})
     thread.start()
-    spec_right = librosa.stft(wave_right, n_fft, hop_length=hop_length)
+    spec_right = librosa.stft(y=wave_right, n_fft=n_fft, hop_length=hop_length)
     thread.join()   
     
     spec = np.asfortranarray([spec_left, spec_right])
@@ -302,13 +302,18 @@ def cmb_spectrogram_to_wave(spec_m, mp, extra_bins_h=None, extra_bins=None):
             sr = mp.param['band'][d+1]['sr']
             if d == 1: # lower
                 spec_s = fft_lp_filter(spec_s, bp['lpf_start'], bp['lpf_stop'])
-                wave = librosa.resample(spectrogram_to_wave(spec_s, bp['hl'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse']), bp['sr'], sr, res_type="sinc_fastest")
+                wave = librosa.resample(y=spectrogram_to_wave(spec_s, bp['hl'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse']), 
+                                        orig_sr=bp['sr'], 
+                                        target_sr=sr, 
+                                        res_type="sinc_fastest")
             else: # mid
                 spec_s = fft_hp_filter(spec_s, bp['hpf_start'], bp['hpf_stop'] - 1)
                 spec_s = fft_lp_filter(spec_s, bp['lpf_start'], bp['lpf_stop'])
                 wave2 = np.add(wave, spectrogram_to_wave(spec_s, bp['hl'], mp.param['mid_side'], mp.param['mid_side_b2'], mp.param['reverse']))
-                # wave = librosa.core.resample(wave2, bp['sr'], sr, res_type="sinc_fastest")
-                wave = librosa.core.resample(wave2, bp['sr'], sr,res_type='scipy')
+                wave = librosa.resample(y=wave2, 
+                                        orig_sr=bp['sr'], 
+                                        target_sr=sr,
+                                        res_type='scipy')
         
     return wave.T
 

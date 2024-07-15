@@ -56,12 +56,11 @@ class  _audio_pre_():
         for d in range(bands_n, 0, -1): 
             bp = self.mp.param['band'][d]
             if d == bands_n: # high-end band
-                X_wave[d], _ = librosa.core.load(
-                    music_file, bp['sr'], False, dtype=np.float32, res_type=bp['res_type'])
+                X_wave[d], _ = librosa.load(music_file, sr=bp['sr'], mono=False, dtype=np.float32, res_type=bp['res_type'])
                 if X_wave[d].ndim == 1:
                     X_wave[d] = np.asfortranarray([X_wave[d], X_wave[d]])
             else: # lower bands
-                X_wave[d] = librosa.core.resample(X_wave[d+1], self.mp.param['band'][d+1]['sr'], bp['sr'], res_type=bp['res_type'])
+                X_wave[d] = librosa.resample(X_wave[d+1], orig_sr=self.mp.param['band'][d+1]['sr'], target_sr=bp['sr'], res_type=bp['res_type'])
             # Stft of wave source
             X_spec_s[d] = spec_utils.wave_to_spectrogram_mt(X_wave[d], bp['hl'], bp['n_fft'], self.mp.param['mid_side'], self.mp.param['mid_side_b2'], self.mp.param['reverse'])
             # pdb.set_trace()
@@ -99,10 +98,15 @@ class  _audio_pre_():
             wavfile.write(os.path.join(vocal_root , 'vocal_{}.wav'.format(name) ), self.mp.param['sr'], (np.array(wav_vocals)*32768).astype("int16"))
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: python script_name.py <audio_path>")
+        sys.exit(1)
+
+    audio_path = sys.argv[1]
     device = 'cuda'
-    is_half=True
-    model_path='uvr5_weights/2_HP-UVR.pth'
-    pre_fun = _audio_pre_(model_path=model_path,device=device,is_half=True)
-    audio_path = 'audio.aac'
+    is_half = True
+    model_path = 'uvr5_weights/2_HP-UVR.pth'
     save_path = 'opt'
-    pre_fun._path_audio_(audio_path , save_path,save_path)
+
+    pre_fun = _audio_pre_(model_path=model_path, device=device, is_half=is_half)
+    pre_fun._path_audio_(audio_path, save_path, save_path)
