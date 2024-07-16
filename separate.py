@@ -47,7 +47,7 @@ class  _audio_pre_():
 
     def _path_audio_(self, music_file ,ins_root=None,vocal_root=None):
         if(ins_root is None and vocal_root is None):return "No save root."
-        name=os.path.basename(music_file)
+        name = os.path.splitext(os.path.basename(music_file))[0]
         if(ins_root is not None):os.makedirs(ins_root, exist_ok=True)
         if(vocal_root is not None):os.makedirs(vocal_root , exist_ok=True)
         X_wave, y_wave, X_spec_s, y_spec_s = {}, {}, {}, {}
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     audio_path = sys.argv[1]
     device = 'cuda'
-    is_half = True
+    is_half = False
     model_path = 'uvr5_weights/2_HP-UVR.pth'
     save_path = 'opt'
 
