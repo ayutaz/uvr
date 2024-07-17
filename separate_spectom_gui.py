@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
+from scipy import signal
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sounddevice as sd
 import tempfile
@@ -54,22 +55,51 @@ def process_audio():
     plot_spectrum(fft_freq, positive_fft_data, filtered_positive_fft_data)
 
 def plot_spectrum(freqs, orig_fft_data, filt_fft_data):
+    if len(freqs) == 0 or len(orig_fft_data) == 0 or len(filt_fft_data) == 0:
+        messagebox.showwarning("警告", "スペクトルデータが空です。")
+        return
+
     for widget in frame.winfo_children():
         widget.destroy()
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
-    ax1.plot(freqs, orig_fft_data)
+    # 表示範囲を制限
+    freq_range = (freqs >= 100) & (freqs <= 3000)
+    plot_freqs = freqs[freq_range]
+    plot_orig_fft = orig_fft_data[freq_range]
+    plot_filt_fft = filt_fft_data[freq_range]
+
+    # オリジナルのスペクトル
+    ax1.plot(plot_freqs, plot_orig_fft)
     ax1.set_xlabel('周波数 [Hz]')
     ax1.set_ylabel('振幅')
     ax1.set_title('元のスペクトル')
     ax1.grid(True)
+    ax1.set_xlim(100, 3000)
 
-    ax2.plot(freqs, filt_fft_data)
+    # ピーク検出（上位5つ）
+    peak_indices = signal.argrelmax(plot_orig_fft, order=1)[0]
+    top_5_peaks = peak_indices[np.argsort(plot_orig_fft[peak_indices])[-5:]]
+
+    # ピークをプロットし、注釈を追加
+    ax1.plot(plot_freqs[top_5_peaks], plot_orig_fft[top_5_peaks], 'ro')
+    
+    for idx in top_5_peaks:
+        freq = int(round(plot_freqs[idx]))
+        ax1.annotate(f'{freq} Hz',
+                     xy=(plot_freqs[idx], plot_orig_fft[idx]),
+                     xytext=(10, 10),
+                     textcoords='offset points',
+                     arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
+
+    # フィルタリング後のスペクトル
+    ax2.plot(plot_freqs, plot_filt_fft)
     ax2.set_xlabel('周波数 [Hz]')
     ax2.set_ylabel('振幅')
     ax2.set_title('フィルタリング後のスペクトル')
     ax2.grid(True)
+    ax2.set_xlim(100, 3000)
 
     plt.tight_layout()
 
